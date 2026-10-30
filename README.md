@@ -1,41 +1,51 @@
-# Home Network Infrastructure Lab
+# HomeLab README
 
-I wanted a homelab that would be useful at home while helping me build real networking and Linux skills. I started with a Raspberry Pi 4 and a NETGEAR GS305E managed switch, then added monitoring, DNS filtering, and remote access.
+## 1. What I built
 
-![NETGEAR switch and Raspberry Pi running in my home lab](images/image5.jpg)
+I wanted to build a home lab that wasn’t just impressive to recruiters or the public. I wanted something that brought real value to my own home environment. From researching Raspberry Pis and the crazy price of them to actually purchasing one and using it for my homelab, it has been a great journey.
 
-## Hardware and network
+I started off simple by deploying Uptime Kuma, a network monitoring system that checks whether parts of my setup are working. Say, for example, my home router stops responding: Kuma can alert me when that check fails, as long as the Pi and its internet connection are still working. If my home internet goes out completely, Kuma cannot send me an alert during the outage because it runs inside my home. I also ran it in a Docker container because that makes the service easier to install and manage without interfering with the rest of my Raspberry Pi.
 
-The switch gives me enough Ethernet ports for the Pi and my other devices. I checked its port status to confirm the connected devices had active gigabit links. I also reserved addresses for the switch and Pi through my router so I can find them consistently without manually setting static addresses on either device.
+I also set up Pi-hole, a DNS filtering service for my laptop, along with Unbound. Super useful: my blocklists contain nearly 280,000 domains. If my laptop requests a domain on those lists, Pi-hole blocks the DNS lookup. That can stop some ads and unwanted connections, though it cannot block every ad or unsafe link.
 
-![Switch port status showing active links](images/image1.png)
+Lastly, I wanted to reach my Raspberry Pi when I’m not home and get the benefits of DNS filtering while I’m away. I configured Tailscale to connect my laptop and Pi through a private network over the internet, without opening a port on my home router.
 
-I assembled the Pi, installed Raspberry Pi OS, and set up SSH key access so I can administer it from my laptop. I hit a boot issue along the way. After reimaging the SD card, I eventually realized the card was still in my laptop instead of the Pi—a good reminder to check the physical setup before assuming the software is broken.
+These services brought real benefits to my setup and gave me the hands-on experience I was looking for to expand my technical skills outside of school, competitions, clubs, and my jobs.
 
-## Services I set up
+![NETGEAR switch and Raspberry Pi running in my homelab](images/image5.jpg)
+
+## 2. Hardware and network
+
+I didn’t feel it was worth mentioning before, but I purchased a managed switch for this environment because my router doesn’t have enough Ethernet ports. I chose a NETGEAR GS305E that I plan to experiment with more later. For this lab, I verified that the connected ports were up and negotiated gigabit links. I also used my router’s management app to set up DHCP reservations so my Pi and switch retain predictable addresses.
+
+![Switch port status showing the active connections](images/image1.png)
+
+I assembled the Raspberry Pi and installed Raspberry Pi OS on its SD card. I ran into trouble getting it to boot and reimaged the card while troubleshooting. Eventually, I realized I had left the reimaged card in my laptop instead of putting it back in the Pi. Once it was in the Pi, I was able to boot and use the SSH key access I had configured to connect from my laptop. That was a good reminder to check the physical setup before assuming the software is the problem.
+
+## 3. Services used
 
 ### Uptime Kuma
 
-I run Uptime Kuma in a Docker container to keep it separate from the other services on the Pi and make it easier to manage. It checks things like router reachability and whether Pi-hole DNS is responding. I can see the results in one dashboard and configure notifications for failed checks.
-
-One limitation: because Kuma runs on the Pi at home, it cannot send me an alert if the Pi is off or my home internet cannot reach the notification service. External monitoring would be a future improvement.
+Uptime Kuma has been beyond useful. When I first deployed it, my reason was to monitor my network, and that WAS true. Now I recognize its value beyond checking my router. I can also monitor homelab services such as Pi-hole DNS and see whether they are responding. These are only the first services I wanted to set up on my Pi, and I plan to use Kuma to check more of them as the lab grows.
 
 ![Uptime Kuma checking Pi-hole DNS](images/image4.jpg)
 
-### Pi-hole and Unbound
+### Pi-hole + Unbound
 
-Pi-hole filters DNS requests from my laptop using blocklists containing roughly 280,000 domains. If a requested domain is blocked, Pi-hole refuses to resolve it. This helps reduce some ads and unwanted connections, though it cannot catch every ad or malicious site.
+Uptime Kuma is useful for my homelab projects, sure, but Pi-hole and Unbound have brought the greatest day-to-day benefit to me. Pi-hole has blocked requests to ad-related domains that I don’t need in my life.
 
-For allowed domains, Pi-hole forwards the request to Unbound running on the Pi. Unbound performs the DNS lookup instead of forwarding every request to a public resolver. I tested this from my laptop and checked Pi-hole’s query log to confirm requests were being handled and a test domain was blocked. I kept this limited to my own laptop so it would not disrupt my family’s devices.
+Unbound is a DNS resolver that lets my Raspberry Pi look up domains without forwarding every request to a public resolver such as Google or Cloudflare. Here’s how I understand the flow: my laptop asks Pi-hole for a website’s IP address. Pi-hole checks whether the domain is blocked. If it’s allowed, Pi-hole asks Unbound, which performs the lookup and returns the answer. Boom, my laptop can use that address to reach the website.
 
-![Blocked domain shown in the Pi-hole query log](images/image6.jpg)
+I tested this on my own laptop first so I wouldn’t change DNS for the rest of my family. I confirmed that my laptop could resolve an allowed domain and that a blocked domain appeared in Pi-hole’s Query Log.
+
+![Blocked domain in Pi-hole’s Query Log](images/image6.jpg)
 
 ### Tailscale
 
-I added Tailscale to my Pi and laptop so I can reach the Pi over a private connection when I am away from home, without opening a port on my router. I also configured my laptop to use Pi-hole DNS through Tailscale. This gives me a practical way to manage the lab remotely and use DNS filtering outside my home.
+I deployed Tailscale on my Raspberry Pi because I want to be able to access it at school, if I’m being completely honest with you. Perhaps one day someone will ask to see my Pi through the Linux command line, and boom, I’ll be ready.
 
-![Pi and laptop connected through Tailscale](images/image3.png)
+My laptop and Pi are both signed in to my Tailscale network. That gives my laptop a private route to the Pi for SSH access without exposing SSH through my home router. I also configured my laptop to use Pi-hole DNS through Tailscale when I’m away. I still want to test the entire setup from a network outside my home so I can document that result properly.
 
-## What I learned
+![Laptop and Raspberry Pi connected in Tailscale](images/image3.png)
 
-This project helped me practice switch management, DHCP reservations, Linux and SSH administration, Docker, DNS troubleshooting, and checking whether a service actually works from a client device. My next goal is to improve the monitoring and recovery process as I continue building the lab.
+## Thank you for reading! :)
