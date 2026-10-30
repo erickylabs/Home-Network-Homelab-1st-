@@ -49,3 +49,4 @@ My laptop and Pi are both signed in to my Tailscale network. That gives my lapto
 ![Laptop and Raspberry Pi connected in Tailscale](images/image3.png)
 
 ## Thank you for reading! :)
+![Thank you doggo](images/image2.png)
